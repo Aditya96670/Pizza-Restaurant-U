@@ -1,0 +1,63 @@
+import { useState } from 'react';
+import axios from 'axios';
+
+function App() {
+  const [symptoms, setSymptoms] = useState('');
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleCheck = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          model: 'gpt-3.5-turbo',
+          messages: [{
+            role: 'user',
+            content: `A person has the following symptoms: ${symptoms}. 
+            What disease might it be? What's the recovery time? If it's serious, suggest treatment and cost in INR.`,
+          }],
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      setResult(response.data.choices[0].message.content);
+    } catch (error) {
+      setResult("Error fetching prediction.");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="p-6 max-w-xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Symptom Checker</h1>
+      <textarea
+        className="w-full border rounded p-2"
+        rows={5}
+        placeholder="Enter your symptoms (e.g. fever, headache, nausea)..."
+        value={symptoms}
+        onChange={(e) => setSymptoms(e.target.value)}
+      />
+      <button
+        className="bg-blue-500 text-white px-4 py-2 mt-2 rounded"
+        onClick={handleCheck}
+        disabled={loading}
+      >
+        {loading ? "Checking..." : "Check My Health"}
+      </button>
+      {result && (
+        <div className="mt-4 bg-gray-100 p-4 rounded shadow">
+          <h2 className="font-semibold mb-2">Prediction:</h2>
+          <p>{result}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
